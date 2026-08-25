@@ -292,7 +292,7 @@ const backgrounds = {
 
     malware:
         "url('images/malware.jpg')",
-
+    
     phishing:
         "url('images/phishing.jpg')",
 

@@ -1,20 +1,11 @@
 /* =================================
    CYBERSAFE
-   PAGE SCROLL + SMART NAVIGATION
+   SCROLL + NAVIGATION + BACKGROUNDS
 ================================= */
 
 
 /* =================================
-   ВСЕ ОСНОВНЫЕ СТРАНИЦЫ
-   0 = Startseite
-   1 = Malware
-   2 = Phishing
-   3 = Social Engineering
-   4 = Passwörter
-   5 = 2FA
-   6 = Internet
-   7 = Schutz
-   8 = Cyberangriff
+   СЕКЦИИ САЙТА
 ================================= */
 
 const pages = [
@@ -26,7 +17,9 @@ const pages = [
     document.querySelector("#2fa"),
     document.querySelector("#internet"),
     document.querySelector("#schutz"),
-    document.querySelector("#angriff")
+    document.querySelector("#angriff"),
+    document.querySelector(".final-section:not(.sources)"),
+    document.querySelector(".sources")
 ].filter(Boolean);
 
 
@@ -35,14 +28,13 @@ const pages = [
 ================================= */
 
 const navItems = document.querySelectorAll(".nav-item");
-const navIndicator = document.querySelector(".nav-indicator");
 
+const navIndicator =
+    document.querySelector(".nav-indicator");
 
-/* =================================
-   СОСТОЯНИЕ
-================================= */
 
 let currentPage = 0;
+
 let isScrolling = false;
 
 
@@ -50,49 +42,34 @@ let isScrolling = false;
    ПОДСВЕТКА НАВИГАЦИИ
 ================================= */
 
-function updateNavigation(index) {
-
-    /*
-       Проверяем, существует ли
-       такой пункт навигации
-    */
+function setActivePage(index) {
 
     if (!navItems[index]) {
         return;
     }
 
 
-    /*
-       Убираем active со всех
-    */
+    navItems.forEach((item, i) => {
 
-    navItems.forEach(function(item) {
+        if (i === index) {
 
-        item.classList.remove("active");
+            item.classList.add("active");
+
+        } else {
+
+            item.classList.remove("active");
+
+        }
 
     });
 
 
-    /*
-       Получаем нужный пункт
-    */
+    /* Перемещение светящегося индикатора */
 
     const activeItem = navItems[index];
 
 
-    /*
-       Делаем его активным
-    */
-
-    activeItem.classList.add("active");
-
-
-    /*
-       Перемещаем светящийся
-       индикатор
-    */
-
-    if (navIndicator) {
+    if (navIndicator && activeItem) {
 
         navIndicator.style.top =
             activeItem.offsetTop + "px";
@@ -103,75 +80,57 @@ function updateNavigation(index) {
 
 
 /* =================================
-   ОПРЕДЕЛЕНИЕ ТЕКУЩЕЙ СТРАНИЦЫ
+   ОПРЕДЕЛЕНИЕ ТЕКУЩЕЙ СЕКЦИИ
 ================================= */
 
-function detectCurrentPage() {
+function detectPage() {
 
-    /*
-       Если сейчас выполняется
-       автоматический переход,
-       ничего не меняем.
-    */
-
-    if (isScrolling) {
-        return;
-    }
+    const screenCenter =
+        window.innerHeight / 2;
 
 
-    /*
-       Точка, по которой определяем
-       текущий раздел.
+    let bestIndex = 0;
 
-       35% высоты экрана.
-    */
-
-    const detectionPoint =
-        window.innerHeight * 0.35;
+    let bestDistance = Infinity;
 
 
-    let detectedPage = 0;
+    pages.forEach((page, index) => {
 
+        if (!page) {
+            return;
+        }
 
-    /*
-       Проверяем только 9 основных
-       страниц.
-
-       Fazit и Quellen сюда
-       специально НЕ входят.
-    */
-
-    pages.forEach(function(page, index) {
 
         const rect =
             page.getBoundingClientRect();
 
 
-        /*
-           Если верх секции уже прошёл
-           точку определения,
-           значит мы на этой секции.
-        */
+        const sectionCenter =
+            rect.top + rect.height / 2;
 
-        if (rect.top <= detectionPoint) {
 
-            detectedPage = index;
+        const distance =
+            Math.abs(
+                sectionCenter - screenCenter
+            );
+
+
+        if (distance < bestDistance) {
+
+            bestDistance = distance;
+
+            bestIndex = index;
 
         }
 
     });
 
 
-    /*
-       Если страница изменилась,
-       обновляем навигацию.
-    */
+    if (bestIndex !== currentPage) {
 
-    if (detectedPage !== currentPage) {
+        currentPage = bestIndex;
 
-        currentPage = detectedPage;
-
-        updateNavigation(currentPage);
+        setActivePage(currentPage);
 
     }
 
@@ -179,50 +138,30 @@ function detectCurrentPage() {
 
 
 /* =================================
-   ПЕРЕХОД НА СТРАНИЦУ
+   ПЕРЕХОД К СЕКЦИИ
 ================================= */
 
 function goToPage(index) {
-
-    /*
-       Не позволяем выйти
-       за пределы основных страниц.
-    */
 
     if (
         index < 0 ||
         index >= pages.length
     ) {
+
         return;
+
     }
 
-
-    /*
-       Начинаем блокировку.
-    */
 
     isScrolling = true;
 
 
-    /*
-       Запоминаем страницу.
-    */
-
     currentPage = index;
 
-
-    /*
-       Сразу меняем островок.
-    */
-
-    updateNavigation(currentPage);
+    setActivePage(index);
 
 
-    /*
-       Плавно переходим.
-    */
-
-    pages[currentPage].scrollIntoView({
+    pages[index].scrollIntoView({
 
         behavior: "smooth",
 
@@ -231,19 +170,13 @@ function goToPage(index) {
     });
 
 
-    /*
-       После окончания анимации
-       снова разрешаем определение
-       текущей страницы.
-    */
-
-    setTimeout(function() {
+    setTimeout(() => {
 
         isScrolling = false;
 
-        detectCurrentPage();
+        detectPage();
 
-    }, 1000);
+    }, 900);
 
 }
 
@@ -259,22 +192,30 @@ window.addEventListener(
     function(event) {
 
         /*
-           Отключаем обычный свободный
-           scroll браузера.
+           Не перехватываем колесо,
+           если пользователь находится
+           внутри отдельной страницы.
         */
+
+        if (pages.length === 0) {
+            return;
+        }
+
 
         event.preventDefault();
 
 
-        /*
-           Если предыдущий переход
-           ещё не закончился —
-           ничего не делаем.
-        */
-
         if (isScrolling) {
             return;
         }
+
+
+        /*
+           Определяем,
+           где сейчас пользователь
+        */
+
+        detectPage();
 
 
         /*
@@ -312,7 +253,7 @@ window.addEventListener(
 
 
 /* =================================
-   ОТСЛЕЖИВАЕМ РЕАЛЬНОЕ ПОЛОЖЕНИЕ
+   ОБЫЧНЫЙ SCROLL
 ================================= */
 
 window.addEventListener(
@@ -321,7 +262,11 @@ window.addEventListener(
 
     function() {
 
-        detectCurrentPage();
+        if (!isScrolling) {
+
+            detectPage();
+
+        }
 
     }
 
@@ -332,8 +277,15 @@ window.addEventListener(
    ФОНОВЫЕ КАРТИНКИ
 ================================= */
 
-const sections =
-    document.querySelectorAll(".section");
+/*
+   ВАЖНО:
+
+   Эти картинки используются именно
+   как БОЛЬШОЙ ФОН секции.
+
+   Они могут совпадать с картинками
+   карточек, но это не обязательно.
+*/
 
 
 const backgrounds = {
@@ -366,7 +318,37 @@ const backgrounds = {
 
 
 /* =================================
-   ДИНАМИЧЕСКИЕ ФОНЫ
+   АКТИВНЫЙ ФОН
+================================= */
+
+const sections =
+    document.querySelectorAll(".section");
+
+
+sections.forEach((section) => {
+
+    const id = section.id;
+
+
+    /*
+       Если для этой секции есть
+       картинка — устанавливаем её
+    */
+
+    if (backgrounds[id]) {
+
+        section.style.setProperty(
+            "--section-bg",
+            backgrounds[id]
+        );
+
+    }
+
+});
+
+
+/* =================================
+   ОТСЛЕЖИВАНИЕ СЕКЦИЙ
 ================================= */
 
 const backgroundObserver =
@@ -374,33 +356,13 @@ const backgroundObserver =
 
         function(entries) {
 
-            entries.forEach(function(entry) {
+            entries.forEach((entry) => {
 
                 const section =
                     entry.target;
 
-                const id =
-                    section.id;
-
 
                 if (entry.isIntersecting) {
-
-                    /*
-                       Устанавливаем картинку
-                    */
-
-                    if (backgrounds[id]) {
-
-                        section.style.setProperty(
-
-                            "--section-bg",
-
-                            backgrounds[id]
-
-                        );
-
-                    }
-
 
                     /*
                        Включаем фон
@@ -410,9 +372,11 @@ const backgroundObserver =
                         "background-active"
                     );
 
-                }
+                } else {
 
-                else {
+                    /*
+                       Выключаем фон
+                    */
 
                     section.classList.remove(
                         "background-active"
@@ -425,17 +389,21 @@ const backgroundObserver =
         },
 
         {
-            threshold: 0.4
+            /*
+               Фон включается,
+               когда примерно 20%
+               секции находятся на экране.
+            */
+
+            threshold: 0.2
         }
 
     );
 
 
-/* =================================
-   ЗАПУСК НАБЛЮДАТЕЛЯ
-================================= */
+/* Наблюдаем за всеми секциями */
 
-sections.forEach(function(section) {
+sections.forEach((section) => {
 
     backgroundObserver.observe(section);
 
@@ -443,7 +411,9 @@ sections.forEach(function(section) {
 
 
 /* =================================
-   НАЧАЛЬНОЕ СОСТОЯНИЕ
+   ЗАПУСК
 ================================= */
 
-updateNavigation(0);
+setActivePage(0);
+
+detectPage();

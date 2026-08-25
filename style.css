@@ -566,6 +566,18 @@ body {
    DYNAMIC BACKGROUND
 ================================= */
 
+.section {
+
+    position: relative;
+
+    overflow: hidden;
+}
+
+
+/* =================================
+   ФОНОВАЯ КАРТИНКА
+================================= */
+
 .section::before {
 
     content: "";
@@ -574,24 +586,31 @@ body {
 
     inset: 0;
 
-    background-image:
-        var(--section-bg);
+    background-image: var(--section-bg);
 
     background-size: cover;
 
     background-position: center;
+
+    background-repeat: no-repeat;
 
     opacity: 0;
 
     transform: scale(1.05);
 
     transition:
-        opacity 1.2s ease,
+        opacity 1s ease,
         transform 6s ease;
 
     z-index: 0;
+
+    pointer-events: none;
 }
 
+
+/* =================================
+   ЗАТЕМНЕНИЕ
+================================= */
 
 .section::after {
 
@@ -602,45 +621,51 @@ body {
     inset: 0;
 
     background:
-
         linear-gradient(
             90deg,
-            rgba(3,9,20,0.96),
-            rgba(3,9,20,0.78),
-            rgba(3,9,20,0.88)
+            rgba(3, 9, 20, 0.86),
+            rgba(3, 9, 20, 0.58),
+            rgba(3, 9, 20, 0.84)
         );
 
     opacity: 0;
 
     transition:
-        opacity 1.2s ease;
+        opacity 1s ease;
 
     z-index: 1;
+
+    pointer-events: none;
 }
 
 
+/* =================================
+   АКТИВНЫЙ ФОН
+================================= */
+
 .section.background-active::before {
 
-    opacity: 0.65;
+    opacity: 0.75;
 
     transform: scale(1);
-
 }
 
 
 .section.background-active::after {
 
     opacity: 1;
-
 }
 
+
+/* =================================
+   КОНТЕНТ ПОВЕРХ ФОНА
+================================= */
 
 .section > * {
 
     position: relative;
 
     z-index: 2;
-
 }
 
 
